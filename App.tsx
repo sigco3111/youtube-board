@@ -48,6 +48,10 @@ function App() {
     type Period = 'all' | '7d' | '30d' | '90d';
     type SortOrder = 'date' | 'viewCount';
 
+    // API 키가 환경 변수에서 로드되었는지 여부를 추적하는 상태 변수
+    const [isYoutubeKeyFromEnv, setIsYoutubeKeyFromEnv] = useState<boolean>(false);
+    const [isGeminiKeyFromEnv, setIsGeminiKeyFromEnv] = useState<boolean>(false);
+
     // .env.local에서 API 키를 로드하거나 localStorage에서 로드
     const [apiKey, setApiKey] = useState<string | null>(() => {
         // 1. .env.local에서 YOUTUBE_API_KEY 확인
@@ -56,11 +60,24 @@ function App() {
         return envApiKey || localStorage.getItem('youtubeApiKey');
     });
     
-    // Gemini API 키 로드 (유사한 방식으로 구현)
+    // Gemini API 키 로드
     const [geminiApiKey, setGeminiApiKey] = useState<string | null>(() => {
         const envGeminiApiKey = process.env.GEMINI_API_KEY;
         return envGeminiApiKey || localStorage.getItem('geminiApiKey');
     });
+    
+    // 환경 변수에서 API 키가 로드되었는지 확인
+    useEffect(() => {
+        // YouTube API 키가 환경 변수에서 로드되었는지 확인
+        if (process.env.YOUTUBE_API_KEY) {
+            setIsYoutubeKeyFromEnv(true);
+        }
+        
+        // Gemini API 키가 환경 변수에서 로드되었는지 확인
+        if (process.env.GEMINI_API_KEY) {
+            setIsGeminiKeyFromEnv(true);
+        }
+    }, []);
     
     const [youtubeKeyInput, setYoutubeKeyInput] = useState<string>('');
     const [geminiKeyInput, setGeminiKeyInput] = useState<string>('');
@@ -113,10 +130,20 @@ function App() {
 
     const handleDeleteApiKey = (type: 'youtube' | 'gemini') => {
         if (type === 'youtube') {
+            // 환경 변수에서 로드된 키는 삭제할 수 없음
+            if (isYoutubeKeyFromEnv) {
+                setError('환경 변수(.env.local)에서 로드된 YouTube API 키는 UI에서 삭제할 수 없습니다. .env.local 파일을 직접 수정해주세요.');
+                return;
+            }
             localStorage.removeItem('youtubeApiKey');
             setApiKey(null);
             setChannelDataA(null); setChannelDataB(null); setVideoDataA([]); setVideoDataB([]); setError('');
         } else if (type === 'gemini') {
+            // 환경 변수에서 로드된 키는 삭제할 수 없음
+            if (isGeminiKeyFromEnv) {
+                setError('환경 변수(.env.local)에서 로드된 Gemini API 키는 UI에서 삭제할 수 없습니다. .env.local 파일을 직접 수정해주세요.');
+                return;
+            }
             localStorage.removeItem('geminiApiKey');
             setGeminiApiKey(null);
             setUseGeminiApi(false);
@@ -272,30 +299,60 @@ function App() {
                 
                 <div className="bg-slate-800/50 p-4 rounded-xl mb-6 border border-slate-700 space-y-4">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-4">
-                        <div>
-                            <label className="text-sm font-medium text-slate-300 flex items-center mb-2">
-                                <YouTubeIcon />
-                                <span className="ml-1">YouTube Data API Key</span>
-                                {apiKey ? <span className="ml-auto text-xs font-bold text-green-400 bg-green-900/50 px-2 py-0.5 rounded-full">활성</span> : <span className="ml-auto text-xs font-bold text-red-400 bg-red-900/50 px-2 py-0.5 rounded-full">미설정</span>}
-                            </label>
-                            <div className="flex gap-2">
-                                <input type="password" value={youtubeKeyInput} onChange={(e) => setYoutubeKeyInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey('youtube')} placeholder="API 키 입력" className="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-sm" />
-                                <button onClick={() => handleSaveApiKey('youtube')} className="bg-cyan-700 hover:bg-cyan-600 text-white font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">저장</button>
-                                {apiKey && <button onClick={() => handleDeleteApiKey('youtube')} className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">삭제</button>}
+                        {/* YouTube API 키 입력 UI - 환경 변수에서 로드된 경우 숨김 처리 */}
+                        {!isYoutubeKeyFromEnv && (
+                            <div>
+                                <label className="text-sm font-medium text-slate-300 flex items-center mb-2">
+                                    <YouTubeIcon />
+                                    <span className="ml-1">YouTube Data API Key</span>
+                                    {apiKey ? <span className="ml-auto text-xs font-bold text-green-400 bg-green-900/50 px-2 py-0.5 rounded-full">활성</span> : <span className="ml-auto text-xs font-bold text-red-400 bg-red-900/50 px-2 py-0.5 rounded-full">미설정</span>}
+                                </label>
+                                <div className="flex gap-2">
+                                    <input type="password" value={youtubeKeyInput} onChange={(e) => setYoutubeKeyInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey('youtube')} placeholder="API 키 입력" className="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-sm" />
+                                    <button onClick={() => handleSaveApiKey('youtube')} className="bg-cyan-700 hover:bg-cyan-600 text-white font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">저장</button>
+                                    {apiKey && <button onClick={() => handleDeleteApiKey('youtube')} className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">삭제</button>}
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-slate-300 flex items-center mb-2">
-                                <SparklesIcon />
-                                <span className="ml-1">Gemini API Key</span>
-                                {geminiApiKey ? <span className="ml-auto text-xs font-bold text-green-400 bg-green-900/50 px-2 py-0.5 rounded-full">활성</span> : <span className="ml-auto text-xs font-bold text-red-400 bg-red-900/50 px-2 py-0.5 rounded-full">미설정</span>}
-                            </label>
-                            <div className="flex gap-2">
-                                <input type="password" value={geminiKeyInput} onChange={(e) => setGeminiKeyInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey('gemini')} placeholder="API 키 입력" className="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm" />
-                                <button onClick={() => handleSaveApiKey('gemini')} className="bg-cyan-700 hover:bg-cyan-600 text-white font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">저장</button>
-                                {geminiApiKey && <button onClick={() => handleDeleteApiKey('gemini')} className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">삭제</button>}
+                        )}
+                        {/* 환경 변수에서 YouTube API 키가 로드된 경우 표시하는 UI */}
+                        {isYoutubeKeyFromEnv && (
+                            <div>
+                                <label className="text-sm font-medium text-slate-300 flex items-center mb-2">
+                                    <YouTubeIcon />
+                                    <span className="ml-1">YouTube Data API Key</span>
+                                    <span className="ml-auto text-xs font-bold text-green-400 bg-green-900/50 px-2 py-0.5 rounded-full">환경 변수에서 로드됨</span>
+                                </label>
+                                <p className="text-sm text-slate-400 italic">.env.local 파일에서 자동으로 설정되었습니다.</p>
                             </div>
-                        </div>
+                        )}
+                        
+                        {/* Gemini API 키 입력 UI - 환경 변수에서 로드된 경우 숨김 처리 */}
+                        {!isGeminiKeyFromEnv && (
+                            <div>
+                                <label className="text-sm font-medium text-slate-300 flex items-center mb-2">
+                                    <SparklesIcon />
+                                    <span className="ml-1">Gemini API Key</span>
+                                    {geminiApiKey ? <span className="ml-auto text-xs font-bold text-green-400 bg-green-900/50 px-2 py-0.5 rounded-full">활성</span> : <span className="ml-auto text-xs font-bold text-red-400 bg-red-900/50 px-2 py-0.5 rounded-full">미설정</span>}
+                                </label>
+                                <div className="flex gap-2">
+                                    <input type="password" value={geminiKeyInput} onChange={(e) => setGeminiKeyInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey('gemini')} placeholder="API 키 입력" className="flex-grow bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm" />
+                                    <button onClick={() => handleSaveApiKey('gemini')} className="bg-cyan-700 hover:bg-cyan-600 text-white font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">저장</button>
+                                    {geminiApiKey && <button onClick={() => handleDeleteApiKey('gemini')} className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-sm py-1.5 px-3 rounded-lg transition-colors">삭제</button>}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* 환경 변수에서 Gemini API 키가 로드된 경우 표시하는 UI */}
+                        {isGeminiKeyFromEnv && (
+                            <div>
+                                <label className="text-sm font-medium text-slate-300 flex items-center mb-2">
+                                    <SparklesIcon />
+                                    <span className="ml-1">Gemini API Key</span>
+                                    <span className="ml-auto text-xs font-bold text-green-400 bg-green-900/50 px-2 py-0.5 rounded-full">환경 변수에서 로드됨</span>
+                                </label>
+                                <p className="text-sm text-slate-400 italic">.env.local 파일에서 자동으로 설정되었습니다.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
