@@ -1,0 +1,6 @@
+{
+  "name": "YouTube 채널 분석 대시보드",
+  "description": "YouTube 채널 ID를 입력하여 채널의 주요 데이터와 Gemini AI가 제공하는 분석 인사이트를 시각적으로 확인하는 대시보드입니다.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
