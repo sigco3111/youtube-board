@@ -48,8 +48,19 @@ function App() {
     type Period = 'all' | '7d' | '30d' | '90d';
     type SortOrder = 'date' | 'viewCount';
 
-    const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem('youtubeApiKey'));
-    const [geminiApiKey, setGeminiApiKey] = useState<string | null>(() => localStorage.getItem('geminiApiKey'));
+    // .env.local에서 API 키를 로드하거나 localStorage에서 로드
+    const [apiKey, setApiKey] = useState<string | null>(() => {
+        // 1. .env.local에서 YOUTUBE_API_KEY 확인
+        const envApiKey = process.env.YOUTUBE_API_KEY;
+        // 2. 환경 변수에 값이 있으면 사용, 없으면 localStorage에서 로드
+        return envApiKey || localStorage.getItem('youtubeApiKey');
+    });
+    
+    // Gemini API 키 로드 (유사한 방식으로 구현)
+    const [geminiApiKey, setGeminiApiKey] = useState<string | null>(() => {
+        const envGeminiApiKey = process.env.GEMINI_API_KEY;
+        return envGeminiApiKey || localStorage.getItem('geminiApiKey');
+    });
     
     const [youtubeKeyInput, setYoutubeKeyInput] = useState<string>('');
     const [geminiKeyInput, setGeminiKeyInput] = useState<string>('');
