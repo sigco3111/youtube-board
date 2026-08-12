@@ -2,7 +2,7 @@
 
 이 프로젝트는 YouTube 채널의 데이터를 시각화하고, Google Gemini AI를 활용하여 심층적인 분석 인사이트를 제공하는 웹 애플리케이션입니다. 사용자는 채널 ID, 핸들(@handle), 또는 URL을 입력하여 채널의 주요 지표, 동영상 성과, 예상 수익, 시청자 반응 등을 한눈에 파악할 수 있습니다.
 
-실행주소1 : https://youtube-board.vercel.app/
+실행주소1 : https://sigco3111.github.io/youtube-board/
 
 실행주소2 : https://dev-canvas-pi.vercel.app/
 
